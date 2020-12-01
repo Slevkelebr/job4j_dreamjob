@@ -32,12 +32,14 @@
                 <table class="table">
                     <thead>
                     <tr>
-                        <th scope="col">Названия</th>
+                        <th scope="col">#</th>
+                        <th scope="col">Имя кандидата</th>
                     </tr>
                     </thead>
                     <tbody>
                     <% for (Candidate can : Store.instOf().findAllCandidates()) { %>
                     <tr>
+                        <td><%= can.getId()%></td>
                         <td><%= can.getName() %></td>
                     </tr>
                     <% } %>
