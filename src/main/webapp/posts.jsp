@@ -43,8 +43,8 @@
                     <tr>
                         <td><%= post.getId() %></td>
                         <td><%= post.getName() %></td>
-                        <td><%= post.getDescription() %></td>
-                        <td><%= post.getCreated().toString() %></td>
+<%--                        <td><%= post.getDescription() %></td>
+                        <td><%= post.getCreated().toString() %></td>--%>
                     </tr>
                     <% } %>
                     </tbody>
