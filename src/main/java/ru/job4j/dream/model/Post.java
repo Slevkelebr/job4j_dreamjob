@@ -1,6 +1,5 @@
 package ru.job4j.dream.model;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Objects;
 
