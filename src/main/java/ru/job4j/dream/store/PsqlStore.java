@@ -1,6 +1,8 @@
 package ru.job4j.dream.store;
 
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.job4j.dream.model.Candidate;
 import ru.job4j.dream.model.Post;
 
@@ -14,9 +16,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+
 public class PsqlStore implements Store {
 
     private final BasicDataSource pool = new BasicDataSource();
+
+    private static final Logger LOG = LogManager.getLogger(PsqlStore.class.getName());
 
     private PsqlStore() {
         Properties cfg = new Properties();
@@ -61,7 +66,7 @@ public class PsqlStore implements Store {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
         return posts;
     }
@@ -78,21 +83,30 @@ public class PsqlStore implements Store {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
         return candidates;
     }
 
     @Override
-    public void save(Post post) {
+    public void savePost(Post post) {
         if (post.getId() == 0) {
-            create(post);
+            createPost(post);
         } else {
-            update(post);
+            updatePost(post);
         }
     }
 
-    private Post create(Post post) {
+    @Override
+    public void saveCandidate(Candidate candidate) {
+        if (candidate.getId() == 0) {
+            createCandidate(candidate);
+        } else {
+            updateCandidate(candidate);
+        }
+    }
+
+    private Post createPost(Post post) {
         try (Connection cn = pool.getConnection();
              PreparedStatement ps =  cn.prepareStatement("INSERT INTO post(name) VALUES (?)", PreparedStatement.RETURN_GENERATED_KEYS)
         ) {
@@ -104,25 +118,54 @@ public class PsqlStore implements Store {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
         return post;
     }
 
-    private void update(Post post) {
+    private void updatePost(Post post) {
         try (Connection cn = pool.getConnection();
-             PreparedStatement ps =  cn.prepareStatement("UPDATE post SET name = (?) WHERE id = (?)")
+             PreparedStatement ps =  cn.prepareStatement("UPDATE candidate SET name = (?) WHERE id = (?)")
         ) {
             ps.setString(1, post.getName());
             ps.setInt(2, post.getId());
             ps.execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
+        }
+    }
+
+    private Candidate createCandidate(Candidate candidate) {
+        try (Connection cn = pool.getConnection();
+             PreparedStatement ps =  cn.prepareStatement("INSERT INTO candidate(name) VALUES (?)", PreparedStatement.RETURN_GENERATED_KEYS)
+        ) {
+            ps.setString(1, candidate.getName());
+            ps.execute();
+            try (ResultSet id = ps.getGeneratedKeys()) {
+                if (id.next()) {
+                    candidate.setId(id.getInt(1));
+                }
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+        }
+        return candidate;
+    }
+
+    private void updateCandidate(Candidate candidate) {
+        try (Connection cn = pool.getConnection();
+             PreparedStatement ps =  cn.prepareStatement("UPDATE candidate SET name = (?) WHERE id = (?)")
+        ) {
+            ps.setString(1, candidate.getName());
+            ps.setInt(2, candidate.getId());
+            ps.execute();
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
         }
     }
 
     @Override
-    public Post findById(int id) {
+    public Post findByIdPost(int id) {
         try (Connection cn = pool.getConnection();
              PreparedStatement ps =  cn.prepareStatement("SELECT * FROM post WHERE id = (?)")
         ) {
@@ -134,7 +177,25 @@ public class PsqlStore implements Store {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    @Override
+    public Candidate findByIdCandidate(int id) {
+        try (Connection cn = pool.getConnection();
+             PreparedStatement ps =  cn.prepareStatement("SELECT * FROM candidate WHERE id = (?)")
+        ) {
+            ps.setInt(1, id);
+            ps.execute();
+            try (ResultSet it = ps.executeQuery()) {
+                if (it.next()) {
+                    return new Candidate(it.getInt("id"), it.getString("name"));
+                }
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
         }
         return null;
     }
